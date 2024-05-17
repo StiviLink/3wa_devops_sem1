@@ -1,0 +1,46 @@
+services:
+
+    maria-db:
+      image: mariadb:latest
+      restart: always
+      ports:
+        - "3307:3307"
+      volumes:
+        - ./db:/var/lib/mysql
+      environment:
+        - MYSQL_USER=root
+        - MYSQL_DATABASE=pokemon
+        - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1
+
+    api-pokemon:
+      image: api-pokemon
+      command: sh -c "npm install && npm start "
+      container_name: api-pokemon
+      build :
+        context: .
+        dockerfile: API_POKEMON/Dockerfile
+      volumes:
+        - ./API_POKEMON:/app
+      ports:
+        - "3000:3000"
+      environment:
+        - PORT=3000
+      depends_on:
+        - maria-db
+
+    react-pokemons-app:
+      image: react-pokemons-app
+      command: sh -c "npm install && npm start "
+      container_name: react-pokemons-app
+      build :
+        context: .
+        dockerfile: react-pokemons-app/Dockerfile
+      volumes:
+        - ./react-pokemons-app:/app
+      ports:
+        - "3001:3001"
+      environment:
+        - PORT=3001
+        - REACT_APP_API_URL=http://localhost:3000/api/
+      depends_on:
+        - api-pokemon
